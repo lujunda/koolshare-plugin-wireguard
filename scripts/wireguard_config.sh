@@ -193,7 +193,7 @@ creat_ipset(){
 
 init_mainland_ipset(){
 	echo_date init mainland ipset
-	wget -o - 'https://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest' | awk -F\| '/CN\|ipv4/ { printf("%s/%d\n", $4, 32-log($5)/log(2)) }' | while read ip; do
+	curl 'http://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest' -4 --interface wg0 | awk -F\| '/CN\|ipv4/ { printf("%s/%d\n", $4, 32-log($5)/log(2)) }' | while read ip; do
 		ipset -! add mainland $ip
 	done
 }
@@ -462,9 +462,9 @@ load_nat(){
 	echo_date "加载nat规则!"
 	check_route
 	creat_ipset
-	init_mainland_ipset
 	add_white_black_ip
 	apply_nat_rules
+	init_mainland_ipset
 }
 
 
