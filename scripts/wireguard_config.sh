@@ -188,6 +188,14 @@ creat_ipset(){
 	ipset -! create white_list nethash && ipset flush white_list
 	ipset -! create black_list nethash && ipset flush black_list
 	ipset -! create gfwlist nethash && ipset flush gfwlist
+	ipset -! create mainland nethash && ipset flush mainland
+}
+
+init_mainland_ipset(){
+	echo_date init mainland ipset
+	wget -o - 'https://ftp.apnic.net/apnic/stats/apnic/delegated-apnic-latest' | awk -F\| '/CN\|ipv4/ { printf("%s/%d\n", $4, 32-log($5)/log(2)) }' | while read ip; do
+		ipset -! add mainland $ip
+	done
 }
 
 add_white_black_ip(){
@@ -356,7 +364,8 @@ apply_nat_rules(){
 	# 创建大陆白名单模式
 	iptables -t mangle -N WIREGUARD_CHN
 	iptables -t mangle -A WIREGUARD_CHN -m set --match-set black_list dst -j MARK --set-mark 0x12e
-	iptables -t mangle -A WIREGUARD_CHN -m geoip ! --destination-country CN -j MARK --set-mark 0x12e
+	iptables -t mangle -A WIREGUARD_CHN -m set --match-set mainland dst -j RETURN
+	iptables -t mangle -A WIREGUARD_CHN -j MARK --set-mark 0x12e
 	#-----------------------FOR GLOABLE---------------------
 	# 创建全局模式
 	iptables -t mangle -N WIREGUARD_GLO
@@ -412,6 +421,7 @@ flush_nat(){
 	ipset -F white_list >/dev/null 2>&1 && ipset -X white_list >/dev/null 2>&1
 	ipset -F black_list >/dev/null 2>&1 && ipset -X black_list >/dev/null 2>&1
 	ipset -F gfwlist >/dev/null 2>&1 && ipset -X gfwlist >/dev/null 2>&1
+	ipset -F mainland >/dev/null 2>&1 && ipset -X mainland >/dev/null 2>&1
 	#remove_redundant_rule
 	ip_rule_exist=`ip rule show | grep "fwmark 0x12e lookup wireguardtable" | grep -c wireguardtable`
 	if [ ! -z "ip_rule_exist" ];then
@@ -452,6 +462,7 @@ load_nat(){
 	echo_date "加载nat规则!"
 	check_route
 	creat_ipset
+	init_mainland_ipset
 	add_white_black_ip
 	apply_nat_rules
 }
