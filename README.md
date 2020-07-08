@@ -9,6 +9,6 @@
 
 # 改进
 1. 通过增加iptables规则```iptables -t nat -I POSTROUTING -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu```修复mtu无法正常协商的问题。
-2. 路由重启后失效。
+2. 解决路由重启后失效。<sub>[todo]</sub>
 3. 自动定时更新gfwlist。<sub>[todo]</sub>
 4. 通过apnic.net自动定时更新国内ip库。<sub>[todo]</sub>
