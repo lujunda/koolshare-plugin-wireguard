@@ -491,6 +491,9 @@ auto_start(){
 }
 
 set_lock(){
+	while [ -f "$LOCK_FILE" ]; do
+		sleep 1
+	done
 	echo 1000 >$LOCK_FILE
 }
 
@@ -608,9 +611,6 @@ conf_upload(){
 #====================================================================
 
 restart_wireguard(){
-	while [ -f "$LOCK_FILE" ]; do
-		sleep 1
-	done
 	stop_wireguard
 	detect_ss
 	start_wireguard
